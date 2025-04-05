@@ -90,6 +90,7 @@ class TrackingService : Service() {
             setPadding(24, 16, 24, 16)
             alpha = 0.9f
             elevation = 8f
+
         }
 
         var initialX = 0f
