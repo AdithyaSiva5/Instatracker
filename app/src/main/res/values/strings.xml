@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">InstaTracker</string>
+    <string name="accessibility_service_description">Detects scrolling in Instagram</string>
 </resources>

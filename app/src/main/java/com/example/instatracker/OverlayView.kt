@@ -1,18 +1,17 @@
 package com.example.instatracker
 
+import android.content.Context
+import android.view.MotionEvent
 import android.widget.TextView
+import androidx.compose.runtime.Composable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
-import android.content.Context
-import android.view.LayoutInflater
-import android.widget.TwoLineListItem
+import android.view.WindowManager
 
 @Composable
 fun OverlayContent(counter: Int, timeSpent: Long) {
@@ -26,21 +25,41 @@ fun OverlayContent(counter: Int, timeSpent: Long) {
     }
 }
 
-//fun createOverlayView(context: Context, counter: Int, timeSpent: Long): android.view.View {
-//    val inflater = LayoutInflater.from(context)
-//    val view = inflater.inflate(android.R.layout.simple_list_item_2, null) as TwoLineListItem // Cast to TwoLineListItem
-//    val counterText = view.text1
-//    val timerText = view.text2
-//    counterText.text = "Reels: $counter"
-//    timerText.text = "Time: ${timeSpent}s"
-//    view.setBackgroundColor(android.graphics.Color.argb(128, 0, 0, 0)) // Semi-transparent black
-//    return view
-//}
+fun createOverlayView(context: Context, counter: Int, timeSpent: Long, params: WindowManager.LayoutParams, windowManager: WindowManager): android.view.View {
+    val view = TextView(context).apply {
+        text = "Reels Watched: $counter\nTime Spent: ${timeSpent}s"
+        setBackgroundColor(android.graphics.Color.argb(128, 0, 0, 255))
+        setTextColor(android.graphics.Color.WHITE)
+        textSize = 16f
+        setPadding(10, 10, 10, 10)
+    }
 
-fun createOverlayView(context: Context, counter: Int, timeSpent: Long): android.view.View {
-    val view = TextView(context)
-    view.text = "Reels: $counter\nTime: ${timeSpent}s"
-    view.setBackgroundColor(android.graphics.Color.argb(128, 0, 0, 0)) // Semi-transparent black
-    view.setTextColor(android.graphics.Color.WHITE) // Ensure text is visible
+    var initialX = 0f
+    var initialY = 0f
+    var initialTouchX = 0f
+    var initialTouchY = 0f
+
+    view.setOnTouchListener { v, event ->
+        when (event.action) {
+            MotionEvent.ACTION_DOWN -> {
+                initialX = params.x.toFloat()
+                initialY = params.y.toFloat()
+                initialTouchX = event.rawX
+                initialTouchY = event.rawY
+                true
+            }
+            MotionEvent.ACTION_MOVE -> {
+                params.x = (initialX + (event.rawX - initialTouchX)).toInt()
+                params.y = (initialY + (event.rawY - initialTouchY)).toInt()
+                windowManager.updateViewLayout(view, params)
+                true
+            }
+            else -> false
+        }
+    }
     return view
+}
+
+fun updateOverlayView(view: TextView, counter: Int, timeSpent: Long) {
+    view.text = "Reels Watched: $counter\nTime Spent: ${timeSpent}s"
 }
