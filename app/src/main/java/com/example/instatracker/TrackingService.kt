@@ -25,13 +25,21 @@ class TrackingService : Service() {
     private lateinit var windowManager: WindowManager
     private lateinit var params: WindowManager.LayoutParams
     private var isOverlayVisible = false
+    private var lastScrollTime = 0L // Track last scroll event time
+    private val debounceInterval = 500L // 500ms debounce interval
 
     private val scrollReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             if (intent?.action == "com.example.instatracker.SCROLL_DETECTED") {
-                counter += 1 // Increase reel count only on scroll
-                updateOverlay()
-                Log.d("TrackingService", "Scroll detected, Counter: $counter")
+                val currentTime = System.currentTimeMillis()
+                if (currentTime - lastScrollTime >= debounceInterval) { // Check if enough time has passed
+                    counter += 1 // Increase reel count only if debounced
+                    lastScrollTime = currentTime // Update last scroll time
+                    updateOverlay()
+                    Log.d("TrackingService", "Scroll detected, Counter: $counter")
+                } else {
+                    Log.d("TrackingService", "Scroll ignored (debounced)")
+                }
             }
         }
     }
@@ -47,7 +55,7 @@ class TrackingService : Service() {
                 RECEIVER_NOT_EXPORTED
             )
         } else { // API 24 and 25
-            @Suppress("UnspecifiedRegisterReceiverFlag") // Suppress lint warning
+            @Suppress("UnspecifiedRegisterReceiverFlag")
             registerReceiver(scrollReceiver, intentFilter)
         }
     }
