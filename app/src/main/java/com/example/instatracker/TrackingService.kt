@@ -2,13 +2,17 @@ package com.example.instatracker
 
 import android.app.Service
 import android.app.usage.UsageStatsManager
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
+import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import android.util.Log
 import android.view.Gravity
+import android.view.MotionEvent
 import android.view.WindowManager
 import android.widget.TextView
 import android.provider.Settings
@@ -22,9 +26,30 @@ class TrackingService : Service() {
     private lateinit var params: WindowManager.LayoutParams
     private var isOverlayVisible = false
 
+    private val scrollReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action == "com.example.instatracker.SCROLL_DETECTED") {
+                counter += 1 // Increase reel count only on scroll
+                updateOverlay()
+                Log.d("TrackingService", "Scroll detected, Counter: $counter")
+            }
+        }
+    }
+
     override fun onCreate() {
         super.onCreate()
         windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
+        val intentFilter = IntentFilter("com.example.instatracker.SCROLL_DETECTED")
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) { // API 26+
+            registerReceiver(
+                scrollReceiver,
+                intentFilter,
+                RECEIVER_NOT_EXPORTED
+            )
+        } else { // API 24 and 25
+            @Suppress("UnspecifiedRegisterReceiverFlag") // Suppress lint warning
+            registerReceiver(scrollReceiver, intentFilter)
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -55,6 +80,30 @@ class TrackingService : Service() {
             setPadding(10, 10, 10, 10)
         }
 
+        var initialX = 0f
+        var initialY = 0f
+        var initialTouchX = 0f
+        var initialTouchY = 0f
+
+        overlayView?.setOnTouchListener { v, event ->
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    initialX = params.x.toFloat()
+                    initialY = params.y.toFloat()
+                    initialTouchX = event.rawX
+                    initialTouchY = event.rawY
+                    true
+                }
+                MotionEvent.ACTION_MOVE -> {
+                    params.x = (initialX + (event.rawX - initialTouchX)).toInt()
+                    params.y = (initialY + (event.rawY - initialTouchY)).toInt()
+                    windowManager.updateViewLayout(overlayView, params)
+                    true
+                }
+                else -> false
+            }
+        }
+
         windowManager.addView(overlayView, params)
         isOverlayVisible = true
         Log.d("TrackingService", "Overlay added successfully")
@@ -70,11 +119,8 @@ class TrackingService : Service() {
         }
     }
 
-    fun incrementCounter() {
-        counter += 1
-        timeSpent += 1
+    private fun updateOverlay() {
         overlayView?.text = "Reels Watched: $counter\nTime Spent: $timeSpent s"
-        Log.d("TrackingService", "Counter: $counter, Time: $timeSpent")
     }
 
     private fun startTracking() {
@@ -90,7 +136,8 @@ class TrackingService : Service() {
                 val topApp = stats.maxByOrNull { it.lastTimeUsed }?.packageName
                 if (topApp == "com.instagram.android") {
                     showOverlay()
-                    incrementCounter() // Increment time while Instagram is open
+                    timeSpent += 1 // Only increase time here
+                    updateOverlay()
                 } else {
                     hideOverlay()
                 }
@@ -103,6 +150,7 @@ class TrackingService : Service() {
         super.onDestroy()
         handler.removeCallbacksAndMessages(null)
         hideOverlay()
+        unregisterReceiver(scrollReceiver)
         Log.d("TrackingService", "Service destroyed")
     }
 
