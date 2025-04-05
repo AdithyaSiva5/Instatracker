@@ -68,6 +68,7 @@ class TrackingService : Service() {
 
     private fun showOverlay() {
         if (!Settings.canDrawOverlays(this) || isOverlayVisible) return
+
         params = WindowManager.LayoutParams(
             WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.WRAP_CONTENT,
@@ -75,17 +76,20 @@ class TrackingService : Service() {
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
             android.graphics.PixelFormat.TRANSLUCENT
         ).apply {
-            gravity = Gravity.TOP or Gravity.LEFT
-            x = 100
+            gravity = Gravity.TOP or Gravity.START // Use 'or' instead of '|' for Kotlin, or clarify with parentheses
+            x = 100 // Start near the left, adjustable
             y = 100
         }
 
         overlayView = TextView(this).apply {
+            // Premium styling
             text = "Reels Watched: $counter\nTime Spent: $timeSpent s"
-            setBackgroundColor(android.graphics.Color.argb(128, 0, 0, 255))
-            setTextColor(android.graphics.Color.WHITE)
+            setBackgroundResource(R.drawable.premium_background)
+            setTextColor(android.graphics.Color.parseColor("#333333"))
             textSize = 16f
-            setPadding(10, 10, 10, 10)
+            setPadding(24, 16, 24, 16)
+            alpha = 0.9f
+            elevation = 8f
         }
 
         var initialX = 0f
@@ -103,8 +107,15 @@ class TrackingService : Service() {
                     true
                 }
                 MotionEvent.ACTION_MOVE -> {
+                    // Update positions for both horizontal and vertical movement
                     params.x = (initialX + (event.rawX - initialTouchX)).toInt()
                     params.y = (initialY + (event.rawY - initialTouchY)).toInt()
+
+                    // Apply boundary constraints if needed
+                    if (params.x < 0) params.x = 0
+                    if (params.x > resources.displayMetrics.widthPixels - 250)
+                        params.x = resources.displayMetrics.widthPixels - 250
+
                     windowManager.updateViewLayout(overlayView, params)
                     true
                 }
@@ -114,7 +125,11 @@ class TrackingService : Service() {
 
         windowManager.addView(overlayView, params)
         isOverlayVisible = true
-        Log.d("TrackingService", "Overlay added successfully")
+        Log.d("TrackingService", "Premium overlay added successfully")
+    }
+
+    private fun updateOverlay() {
+        overlayView?.text = "Reels Watched: $counter\nTime Spent: $timeSpent s"
     }
 
     private fun hideOverlay() {
@@ -127,9 +142,6 @@ class TrackingService : Service() {
         }
     }
 
-    private fun updateOverlay() {
-        overlayView?.text = "Reels Watched: $counter\nTime Spent: $timeSpent s"
-    }
 
     private fun startTracking() {
         handler.post(object : Runnable {
