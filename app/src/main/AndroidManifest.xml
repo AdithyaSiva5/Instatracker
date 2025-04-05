@@ -4,7 +4,7 @@
     <!-- Declare required permissions -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" />
-    <!--        android:icon="@mipmap/ic_launcher"-->
+
     <application
         android:allowBackup="true"
         android:icon="@drawable/ic_logo"

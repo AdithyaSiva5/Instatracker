@@ -1,33 +1,62 @@
+# Ignore Gradle files
+.gradle/
+build/
+
+# Ignore IntelliJ IDEA/Android Studio files
+.idea/
 *.iml
-.gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
-.DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
+*.iws
+!.idea/runConfigurations/
+
+# Ignore local configuration files
 local.properties
 
-# Built application files
+# Ignore OS-generated files
+.DS_Store
+Thumbs.db
+
+# Ignore built application files
 *.apk
 *.ap_
+*.aab
+*.zip
 
-# Files for the ART/Dalvik VM
+# Ignore files for the ART/Dalvik VM
 *.dex
 
-# Java class files
+# Ignore Java class files
 *.class
 
-# Generated files
-build/
-.gradle/
-local.properties
-*.iml
-.idea/
-.DS_Store
+# Ignore native build artifacts
+.externalNativeBuild/
+.cxx/
+captures/
+
+# Ignore documentation files (if generated)
+apidocs/
+javadoc/
+
+# Ignore test results
+*.test
+*.log
+
+# Ignore editor backup files
+*~
+
+# Ignore Gradle wrapper JAR (keep the script but not the downloaded JAR)
+!gradle/wrapper/gradle-wrapper.jar
+
+# Keep Gradle wrapper properties
+!gradle/wrapper/gradle-wrapper.properties
+
+# Ignore JetBrains Rider cache (if used)
+.idea/**/contentModel.xml
+
+# Ignore Android Studio profiler files
+.profiler/
+
+# Ignore crash reports
+.crashlytics/
+
+# Ignore Firebase configuration (if applicable)
+google-services.json
